@@ -1,0 +1,20 @@
+{
+  "name": "property-realtime-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/property_notification_service.ts",
+    "setup:channel": "tsx scripts/create_resident_channel.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test test/notification_policy.test.ts"
+  },
+  "dependencies": {
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
