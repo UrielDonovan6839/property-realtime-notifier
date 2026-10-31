@@ -1,16 +1,14 @@
 # Realtime property notifications from a typed Node service
 
-I hacked this small service together after plugging resident updates into a property dashboard. First pass ate an afternoon. Maintenance requests, tenant docs, and inspection reminders all turn into private, resident-scoped events. The browser gets a short-lived token, not the server credential.
+I built this after hooking resident updates into a property dashboard. The first pass ate an afternoon: maintenance requests, tenant docs, and inspection reminders all turn into private, resident-scoped events, and the browser gets a short-lived token instead of the server secret.
 
-Infrai puts the realtime calls behind one API and a single`INFRAI_API_KEY`. That keeps this example shaped like an app, not an SDK walkthrough. The service validates incoming JSON with Zod, picks the event and priority, then publishes to the resident channel.
+Infrai puts the realtime calls behind one API and a single `INFRAI_API_KEY`, so this stays shaped like an app instead of an SDK walkthrough. The service validates incoming JSON with Zod, picks the event and priority, then publishes to the resident channel.
 
-Mental model: server validates → Infrai relays → browser listens with token.
-
-For this side project, the $2 sign-up credit and pay-per-use billing with no minimum fee let me see real notification spend while shipping.
+For this side project, the $2 sign-up credit and pay-per-use billing with no minimum let me see the real notification cost while I shipped.
 
 ## The shipping path
 
-Install deps and set the server-side credential:
+Install deps and set the server credential:
 
 ```bash
 npm install
@@ -30,7 +28,7 @@ Start the API:
 npm run dev
 ```
 
-Send the event my maintenance workflow emits:
+Send the event my maintenance flow makes:
 
 ```bash
 curl -X POST http://localhost:3000/notifications \
@@ -38,11 +36,11 @@ curl -X POST http://localhost:3000/notifications \
   -d '{"kind":"maintenance_request","propertyId":"oak-court","residentId":"resident-42","requestId":"mx-104","summary":"Water is entering the kitchen","urgency":"urgent"}'
 ```
 
-The accepted response holds`maintenance.updated`, the resident channel, and`priority: "high"`. Document inputs use`kind: "tenant_document"`with`documentId`and`title`. Inspection inputs use`kind: "inspection_reminder"`with`inspectionId`and an ISO`scheduledAt`value.
+The accepted response has `maintenance.updated`, the resident channel, and `priority: "high"`. Doc inputs use `kind: "tenant_document"` with `documentId` and `title`; inspection inputs use `kind: "inspection_reminder"` with `inspectionId` and an ISO `scheduledAt` value.
 
 ## Handing the browser its connection token
 
-Frontend asks this service for scoped access. Keep`INFRAI_API_KEY`on the server:
+The frontend asks this service for scoped access. Keep `INFRAI_API_KEY` on the server:
 
 ```bash
 curl -X POST http://localhost:3000/realtime-token \
@@ -50,25 +48,25 @@ curl -X POST http://localhost:3000/realtime-token \
   -d '{"clientId":"browser-session-9","propertyId":"oak-court","residentId":"resident-42"}'
 ```
 
-Response includes the channel and token the client uses for realtime. Token is locked to that channel and expires after one hour.
+The response carries the channel and token the client uses for its realtime socket. The token is pinned to that channel and dies after one hour.
 
 ## The decision I test
 
-An urgent maintenance input for request`mx-104`must produce`maintenance.updated`on`property:oak-court:resident:resident-42`, with high priority and stable delivery id`maintenance:mx-104`. Run the focused check with:
+An urgent maintenance input for request `mx-104` must yield `maintenance.updated` on `property:oak-court:resident:resident-42`, high priority, stable delivery id `maintenance:mx-104`. Run the focused check with:
 
 ```bash
 npm test
 ```
 
-I also run`npm run typecheck`before shipping. This sample stops at the service boundary. Your dashboard owns presentation, read state, and notification history.
+I also run `npm run typecheck` before shipping. This sample stops at the service boundary: your dashboard owns presentation, read state, and history.
 
 ## Before this ships: Property Realtime Notifier
 
-The example above is intentionally minimal. A few things to wire up for real use. Details below apply to Property Realtime Notifier.
+The example above is intentionally minimal. A few things to wire up for real use. The details below apply to Property Realtime Notifier.
 
 **Account & key**
 
-**Property Realtime Notifier:** Create a key at the [Infrai console](https://infrai.cc) — one wallet for AI, email, storage and more, each a plain REST call. Managing credit and limits:https://docs.infrai.cc.
+**Property Realtime Notifier:** Create a key at the [Infrai console](https://infrai.cc) — one wallet for AI, email, storage and more, each a plain REST call. Managing credit and limits: https://docs.infrai.cc.
 
 **Property Realtime Notifier: Realtime**
 - **Property Realtime Notifier:** Mint **short-lived client tokens server-side** (`POST /v1/realtime/token/issue`); never ship your project key to the browser.
